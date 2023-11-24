@@ -7,19 +7,27 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const path = require("path");
 const corsOptions = require("./config/corsOptions");
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
+
+// Require flashcard routes
+const flashcardRoutes = require("./routes/flashcardRoutes");
 
 connectDB();
 
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // If you need to handle URL-encoded data
 
 app.use("/", express.static(path.join(__dirname, "public")));
 
+// Use routes
 app.use("/", require("./routes/root"));
 app.use("/auth", require("./routes/authRoutes"));
 app.use("/users", require("./routes/userRoutes"));
+app.use("/flashcards", flashcardRoutes);
+
+// Handle 404 responses
 app.all("*", (req, res) => {
   res.status(404);
   if (req.accepts("html")) {
@@ -30,12 +38,10 @@ app.all("*", (req, res) => {
     res.type("txt").send("404 Not Found");
   }
 });
+
 mongoose.connection.once("open", () => {
   console.log("Connected to MongoDB");
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });
-mongoose.connection.on("error", (err) => {
-  console.log(err);
-});
+
+mongoose.connection.on("error", err => console.log(err));

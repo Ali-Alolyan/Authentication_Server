@@ -50,7 +50,7 @@ const deleteFlashcard = async (req, res) => {
      if (!flashcard) {
        return res.status(404).json({ message: "Flashcard not found" });
      }
-     res.json({ message: "Flashcard deleted" });
+     res.json(flashcard);
    } catch (error) {
      res.status(500).json({ message: "Error deleting flashcard" });
    }

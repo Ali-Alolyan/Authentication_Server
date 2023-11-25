@@ -65,9 +65,27 @@ const getFlashcards = async (req, res) => {
   }
 };
 
+const getFlashcardsByUser = async (req, res) => {
+  try {
+      const userId = req.params.userId;
+      const user = await User.findById(userId).populate('flashcards').exec();
+      
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      const flashcards = user.flashcards; // Assuming flashcards are stored in user document
+      res.json(flashcards);
+  } catch (error) {
+      res.status(500).json({ message: 'Error getting flashcards' });
+  }
+};
+
+
 module.exports = {
   addFlashcard,
   updateFlashcard,
   deleteFlashcard,
-  getFlashcards
+  getFlashcards,
+  getFlashcardsByUser
 };

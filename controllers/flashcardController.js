@@ -46,15 +46,28 @@ const deleteFlashcard = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const flashcard = await Flashcard.findByIdAndDelete(id);
+    // Find the flashcard to be deleted
+    const flashcard = await Flashcard.findById(id);
     if (!flashcard) {
       return res.status(404).json({ message: "Flashcard not found" });
     }
-    res.json({ message: "Flashcard deleted" });
+
+    // Find the user who owns the flashcard and remove the flashcard from their collection
+    const users = await User.find({ flashcards: flashcard._id });
+    users.forEach(async (user) => {
+      user.flashcards = user.flashcards.filter(flashcardId => flashcardId.toString() !== id);
+      await user.save();
+    });
+
+    // Delete the flashcard
+    await Flashcard.findByIdAndDelete(id);
+
+    res.json({ message: "Flashcard deleted and removed from user's collection" });
   } catch (error) {
     res.status(500).json({ message: "Error deleting flashcard" });
   }
 };
+
 
 const getFlashcards = async (req, res) => {
   try {

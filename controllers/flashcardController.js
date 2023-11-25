@@ -51,9 +51,12 @@ const deleteFlashcard = async (req, res) => {
       return res.status(404).json({ message: "Flashcard not found" });
     }
 
-    const users = await User.find({ flashcards: flashcard._id });
+    // Update: find users who have the flashcard in their collection
+    const users = await User.find({ "flashcards.flashcardId": flashcard._id });
+
+    // Update: Remove the flashcard from each user's collection
     await Promise.all(users.map(async (user) => {
-      user.flashcards = user.flashcards.filter(flashcardId => flashcardId.toString() !== id);
+      user.flashcards = user.flashcards.filter(flashcardData => flashcardData.flashcardId.toString() !== id);
       await user.save();
     }));
 
@@ -64,6 +67,7 @@ const deleteFlashcard = async (req, res) => {
     res.status(500).json({ message: "Error deleting flashcard" });
   }
 };
+
 
 
 

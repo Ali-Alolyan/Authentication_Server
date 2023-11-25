@@ -88,6 +88,9 @@ const login = async (req, res) => {
   });
   res.json({
     accessToken,
+    _id: foundUser._id,
+    first_name: foundUser.first_name,
+    last_name: foundUser.last_name,
     email: foundUser.email,
   });
 };

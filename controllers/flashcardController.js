@@ -87,11 +87,27 @@ const getFlashcardsByUser = async (req, res) => {
     }
 };
 
+const getFlashcardsToReview = async (req, res) => {
+  const userId = req.params.userId;
+  const currentDate = new Date();
+
+  try {
+      const user = await User.findById(userId).populate('flashcards.flashcardId');
+      const flashcardsToReview = user.flashcards.filter(flashcard =>
+          flashcard.nextReviewDate <= currentDate
+      );
+      res.json(flashcardsToReview);
+  } catch (error) {
+      res.status(500).json({ message: 'Error getting flashcards to review' });
+  }
+};
+
 
 module.exports = {
   addFlashcard,
   updateFlashcard,
   deleteFlashcard,
   getFlashcards,
-  getFlashcardsByUser
+  getFlashcardsByUser,
+  getFlashcardsToReview
 };

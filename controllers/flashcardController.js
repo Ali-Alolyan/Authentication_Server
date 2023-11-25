@@ -1,12 +1,16 @@
 const Flashcard = require("../models/Flashcard");
+const User = require('../models/User');
 
 const addFlashcard = async (req, res) => {
-  const { question, answer } = req.body;
+  const { userId, question, answer } = req.body; // Assuming you're sending the user ID from the client
+
   try {
-    const newFlashcard = await Flashcard.create({ question, answer });
-    res.status(201).json(newFlashcard);
+      const newFlashcard = await Flashcard.create({ question, answer });
+      await User.findByIdAndUpdate(userId, { $push: { flashcards: newFlashcard._id } });
+
+      res.status(201).json(newFlashcard);
   } catch (error) {
-    res.status(500).json({ message: "Error adding flashcard" });
+      res.status(500).json({ message: 'Error adding flashcard' });
   }
 };
 

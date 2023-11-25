@@ -66,19 +66,24 @@ const getFlashcards = async (req, res) => {
 };
 
 const getFlashcardsByUser = async (req, res) => {
-  try {
-      const userId = req.params.userId;
-      const user = await User.findById(userId).populate('flashcards').exec();
-      
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
+    try {
+        const userId = req.params.userId;
+        const user = await User.findById(userId);
 
-      const flashcards = user.flashcards; // Assuming flashcards are stored in user document
-      res.json(flashcards);
-  } catch (error) {
-      res.status(500).json({ message: 'Error getting flashcards' });
-  }
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Retrieve the array of flashcard IDs from the user's document
+        const flashcardIds = user.flashcards; // Assuming 'flashcards' is an array of ObjectIds
+
+        // Fetch the corresponding flashcards from the Flashcard collection
+        const flashcards = await Flashcard.find({ '_id': { $in: flashcardIds } });
+
+        res.json(flashcards);
+    } catch (error) {
+        res.status(500).json({ message: 'Error getting flashcards' });
+    }
 };
 
 

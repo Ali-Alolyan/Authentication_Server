@@ -10,6 +10,10 @@ const getAllUsers = async (req, res) => {
 
 const updateFlashcardProgress = async (req, res) => {
   const { flashcardId, difficulty } = req.body;
+  // Ensure difficulty is a valid value (e.g., 'easy', 'medium', 'hard')
+  if (!['easy', 'medium', 'hard'].includes(difficulty)) {
+    return res.status(400).json({ message: "Invalid difficulty value" });
+  }
   
   try {
     // Fetch the flashcard

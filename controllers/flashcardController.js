@@ -42,19 +42,56 @@ const updateFlashcard = async (req, res) => {
   }
 };
 
+const updateFlashcardProgress = async (req, res) => {
+  const { id } = req.params;
+  const { difficulty } = req.body;
+  // Ensure difficulty is a valid value (e.g., 'easy', 'medium', 'hard')
+  if (!['easy', 'medium', 'hard'].includes(difficulty)) {
+    return res.status(400).json({ message: "Invalid difficulty value" });
+  }
+  
+  try {
+    // Fetch the flashcard
+    const flashcard = await Flashcard.findById(id);
+    if (!flashcard) {
+      return res.status(404).json({ message: "Flashcard not found" });
+    }
+
+    // Calculate the new repetition count and next review date
+    flashcard.repetitionCount += 1;
+    flashcard.difficulty = difficulty;
+    flashcard.nextReviewDate = calculateNextReviewDate(flashcard, difficulty);
+
+    // Save the updated flashcard
+    await flashcard.save();
+
+    res.json(flashcard);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating flashcard progress" });
+  }
+};
+
 const deleteFlashcard = async (req, res) => {
   const { id } = req.params;
 
-   try {
-     const flashcard = await Flashcard.findByIdAndDelete(id);
-     if (!flashcard) {
-       return res.status(404).json({ message: "Flashcard not found" });
-     }
-     res.json(flashcard);
-   } catch (error) {
-     res.status(500).json({ message: "Error deleting flashcard" });
-   }
- };
+  try {
+    const flashcard = await Flashcard.findByIdAndDelete(id);
+    if (!flashcard) {
+      return res.status(404).json({ message: "Flashcard not found" });
+    }
+
+    // Remove the reference to the flashcard in the User collection
+    await User.updateMany(
+      { flashcards: id },
+      { $pull: { flashcards: id } }
+    );
+
+    res.json(flashcard);
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting flashcard" });
+  }
+};
+
 
 
 const getFlashcards = async (req, res) => {
@@ -106,11 +143,37 @@ const getFlashcardsToReview = async (req, res) => {
 };
 
 
+
+
+// Helper function to calculate next review date
+function calculateNextReviewDate(flashcard, difficulty) {
+  const currentDate = new Date();
+  let daysToAdd;
+
+  switch(difficulty) {
+    case 'easy':
+      daysToAdd = 5 * (flashcard.repetitionCount || 1);
+      break;
+    case 'medium':
+      daysToAdd = 3 * (flashcard.repetitionCount || 1);
+      break;
+    case 'hard':
+      daysToAdd = 1;
+      break;
+    default:
+      daysToAdd = 2;
+  }
+
+  return new Date(currentDate.setDate(currentDate.getDate() + daysToAdd));
+}
+
+
 module.exports = {
   addFlashcard,
   updateFlashcard,
   deleteFlashcard,
   getFlashcards,
   getFlashcardsByUser,
-  getFlashcardsToReview
+  getFlashcardsToReview,
+  updateFlashcardProgress
 };
